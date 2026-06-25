@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Menu — Djaka Coffee</title>
+<link rel="stylesheet" href="style.css"/>
+<style>
+/* ── LAYOUT ── */
+.page-wrap { display:flex; min-height:calc(100vh - 64px); }
+.sidebar {
+  width:220px; flex-shrink:0;
+  background:linear-gradient(180deg,#1a0a00 0%,#3d1a00 60%,#6b3a2a 100%);
+  padding:20px 14px;
+  position:sticky; top:64px; height:calc(100vh - 64px);
+  overflow-y:auto; z-index:300;
+}
+.sidebar-bg {
+  width:100%; height:130px; border-radius:12px; overflow:hidden;
+  margin-bottom:20px; background:linear-gradient(135deg,#6b3a2a,#3d1a00);
+  display:flex; align-items:center; justify-content:center;
+  font-size:3.5rem;
+}
+.sidebar-title {
+  font-family:'Playfair Display',serif; color:#d4a843;
+  font-size:.9rem; letter-spacing:1px; text-transform:uppercase;
+  margin-bottom:12px; padding-left:4px;
+}
+.cat-btn {
+  width:100%; display:flex; align-items:center; gap:10px;
+  padding:11px 14px; border-radius:10px; border:none;
+  background:rgba(255,255,255,.07); color:#e8d5c0;
+  font-family:'DM Sans',sans-serif; font-size:.88rem; font-weight:500;
+  cursor:pointer; transition:.22s; margin-bottom:6px; text-align:left;
+}
+.cat-btn:hover { background:rgba(255,255,255,.16); color:#fff; }
+.cat-btn.active { background:linear-gradient(135deg,#b5651d,#d4a843); color:#fff; font-weight:700; }
+.cat-btn .cat-icon { font-size:1.2rem; }
+
+/* ── MAIN ── */
+.main-content { flex:1; padding:24px; padding-bottom:100px; }
+.section-title {
+  font-family:'Playfair Display',serif; font-size:1.6rem; color:#1a0a00;
+  margin-bottom:6px;
+}
+.section-sub { color:#888; font-size:.875rem; margin-bottom:22px; }
+
+/* ── MENU GRID ── */
+.menu-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+  gap:20px;
+}
+.menu-card {
+  background:#fff; border-radius:16px;
+  box-shadow:0 4px 20px rgba(26,10,0,.10);
+  overflow:hidden; transition:.28s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column;
+}
+.menu-card:hover { transform:translateY(-5px); box-shadow:0 12px 36px rgba(26,10,0,.17); }
+
+.card-img-wrap {
+  position:relative; height:150px;
+  background:linear-gradient(135deg,#f5efe6,#e8d5c0);
+  display:flex; align-items:center; justify-content:center;
+  font-size:4rem; overflow:hidden;
+}
+.size-btn.out {
+  opacity:.45; text-decoration:line-through; cursor:not-allowed;
+  border-color:#e8d5c0; color:#aaa;
+}
+.card-body { padding:14px; flex:1; display:flex; flex-direction:column; gap:8px; }
+.card-name { font-weight:700; font-size:.95rem; color:#1a0a00; line-height:1.3; }
+.card-price { font-family:'Playfair Display',serif; color:#b5651d; font-size:1rem; font-weight:600; }
+
+/* Size selector */
+.size-row {
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+.size-btn {
+  flex:1; min-width:44px; padding:5px 4px; text-align:center;
+  border:2px solid #e8d5c0; border-radius:8px;
+  font-size:.75rem; font-weight:600; cursor:pointer;
+  transition:.2s; background:#fff; color:#3d1a00;
+  font-family:'DM Sans',sans-serif;
+}
+.size-btn:hover { border-color:#b5651d; }
+.size-btn.selected { border-color:#b5651d; background:#b5651d; color:#fff; }
+.size-price { font-size:.7rem; display:block; font-weight:400; }
+
+/* Qty + Add */
+.card-actions { display:flex; align-items:center; gap:8px; margin-top:4px; }
+.qty-wrap {
+  display:flex; align-items:center; gap:5px;
+}
+.qty-btn {
+  width:28px; height:28px; border-radius:50%;
+  border:2px solid #e8d5c0; background:#fff;
+  font-size:1rem; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  color:#3d1a00; transition:.2s; flex-shrink:0;
+}
+.qty-btn:hover { border-color:#b5651d; background:#b5651d; color:#fff; }
+.qty-num { font-weight:700; min-width:20px; text-align:center; font-size:.9rem; }
+.add-btn {
+  flex:1; padding:8px; border-radius:8px;
+  background:linear-gradient(135deg,#b5651d,#6b3a2a);
+  color:#fff; border:none; font-size:.82rem; font-weight:700;
+  cursor:pointer; transition:.22s; font-family:'DM Sans',sans-serif;
+}
+.add-btn:hover { opacity:.88; transform:scale(.98); }
+.add-btn:disabled { background:#ccc; cursor:not-allowed; transform:none; }
+
+/* ── CART DRAWER ── */
+.drawer {
+  position:fixed; top:0; right:0; width:380px; max-width:100vw;
+  height:100vh; background:#fff; z-index:800;
+  box-shadow:-8px 0 48px rgba(26,10,0,.2);
+  transform:translateX(100%); transition:transform .35s cubic-bezier(.4,0,.2,1);
+  display:flex; flex-direction:column;
+}
+.drawer.open { transform:none; }
+.drawer-header {
+  padding:20px 20px 16px;
+  background:linear-gradient(135deg,#1a0a00,#3d1a00);
+  display:flex; align-items:center; gap:10px;
+}
+.drawer-header h2 { color:#d4a843; font-family:'Playfair Display',serif; font-size:1.2rem; flex:1; }
+.drawer-close { background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; }
+.drawer-body { flex:1; overflow-y:auto; padding:16px; }
+.drawer-footer {
+  padding:16px 20px;
+  border-top:2px solid #f0e8df;
+  background:#fdf8f2;
+}
+.drawer-total { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.drawer-total .label { font-size:.875rem; color:#888; }
+.drawer-total .amount { font-family:'Playfair Display',serif; font-size:1.3rem; color:#b5651d; font-weight:700; }
+
+/* Cart item */
+.cart-item {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 0; border-bottom:1px solid #f0e8df;
+}
+.cart-item-emoji { font-size:1.8rem; width:44px; text-align:center; }
+.cart-item-info { flex:1; }
+.cart-item-name { font-weight:600; font-size:.88rem; color:#1a0a00; }
+.cart-item-sub { font-size:.75rem; color:#888; }
+.cart-item-price { font-weight:700; color:#b5651d; font-size:.88rem; }
+.cart-item-qty {
+  display:flex; align-items:center; gap:5px;
+}
+
+/* ── BOOKING MODAL ── */
+.table-grid {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:16px 0;
+}
+.table-item {
+  aspect-ratio:1; border-radius:10px; border:2px solid #e8d5c0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer; transition:.2s; font-size:.75rem; font-weight:600;
+  background:#fff; color:#3d1a00;
+}
+.table-item:hover { border-color:#b5651d; }
+.table-item.booked { background:#fce4ec; border-color:#e05252; color:#c62828; cursor:not-allowed; }
+.table-item.selected { background:#b5651d; border-color:#b5651d; color:#fff; }
+.table-icon { font-size:1.5rem; }
+
+/* ── PAYMENT MODAL ── */
+.pay-methods { display:flex; gap:12px; margin:16px 0; }
+.pay-method {
+  flex:1; padding:16px; border-radius:12px;
+  border:2px solid #e8d5c0; cursor:pointer; transition:.2s;
+  text-align:center; background:#fff;
+}
+.pay-method:hover { border-color:#b5651d; }
+.pay-method.selected { border-color:#b5651d; background:rgba(181,101,29,.08); }
+.pay-method .method-icon { font-size:2rem; display:block; margin-bottom:6px; }
+.pay-method .method-name { font-weight:700; font-size:.9rem; color:#3d1a00; }
+
+.qr-wrap {
+  background:#f5efe6; border-radius:12px; padding:20px;
+  text-align:center; margin-top:12px;
+}
+.qr-box {
+  width:160px; height:160px; margin:0 auto 12px;
+  background:#fff; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:7rem;
+  box-shadow:0 4px 16px rgba(26,10,0,.1);
+}
+.qr-status { font-size:.82rem; color:#888; }
+.qr-status.paid { color:#4caf76; font-weight:700; }
+
+.cash-info {
+  background:#f5efe6; border-radius:12px; padding:20px;
+  text-align:center; margin-top:12px;
+}
+.cash-info .amount { font-family:'Playfair Display',serif; font-size:1.8rem; color:#b5651d; }
+
+/* ── PESANAN VIEW ── */
+.pesanan-card {
+  background:#fff; border-radius:16px; padding:20px;
+  box-shadow:0 4px 20px rgba(26,10,0,.1);
+  margin-bottom:16px; display:flex; align-items:center; gap:16px;
+}
+.pesanan-num {
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(135deg,#b5651d,#d4a843);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Playfair Display',serif; font-size:1.2rem; color:#fff; font-weight:700;
+  flex-shrink:0;
+}
+.pesanan-info { flex:1; }
+.pesanan-name { font-weight:700; color:#1a0a00; font-size:.95rem; }
+.pesanan-sub { font-size:.78rem; color:#888; margin-top:2px; }
+
+/* ── STRUK ── */
+.struk { background:#fdf8f2; padding:20px; border-radius:12px; font-size:.85rem; }
+.struk-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed #e8d5c0; }
+.struk-total { display:flex; justify-content:space-between; padding:10px 0 0; font-weight:700; font-size:1rem; }
+
+/* ── PRICE BAR ── */
+#priceBar {
+  position:fixed; bottom:0; left:220px; right:0; z-index:400;
+  background:linear-gradient(135deg,#1a0a00,#3d1a00);
+  color:#fff; padding:14px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 -4px 24px rgba(26,10,0,.25);
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+#priceBar.visible { transform:none; }
+#priceBar .lbl { font-size:.8rem; color:#c8a97e; }
+#priceBar .amt { font-family:'Playfair Display',serif; font-size:1.3rem; color:#d4a843; }
+
+@media(max-width:768px){
+  .sidebar { display:none; }
+  #priceBar { left:0; }
+  .menu-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); }
+  .drawer { width:100vw; }
+}
+</style>
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="navbar-brand" href="#">
+    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6b3a2a,#3d1a00);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #d4a843;">☕</div>
+    <span>Djaka Coffee</span>
+  </a>
+  <button class="nav-btn active" id="btnMenu" onclick="setView('menu')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg> Menu
+  </button>
+  <button class="nav-btn" id="btnFilter" onclick="toggleFilter()" title="Filter Harga">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+    <span id="filterLabel">Harga ↕</span>
+  </button>
+  <button class="nav-btn" id="btnBooking" onclick="openBooking()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg> Meja
+  </button>
+  <button class="nav-btn" id="btnCart" onclick="openCart()" style="position:relative;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 01-8 0"/></svg>
+    Keranjang <span id="cartBadge" class="badge" style="display:none">0</span>
+  </button>
+  <button class="nav-btn" id="btnPesanan" onclick="setView('pesanan')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Pesanan
+  </button>
+  <button class="nav-btn" onclick="logout()" style="margin-left:auto;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+  </button>
+</nav>
+
+<div class="page-wrap">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-bg"><img src="assets/menu/logo djaka.jpg" alt=""></div>
+    <p class="sidebar-title">Kategori</p>
+    <button class="cat-btn active" onclick="setCategory('semua', this)">
+      <span class="cat-icon">🍽️</span> Semua Menu
+    </button>
+    <button class="cat-btn" onclick="setCategory('makanan', this)">
+      <span class="cat-icon">🍛</span> Makanan
+    </button>
+    <button class="cat-btn" onclick="setCategory('minuman', this)">
+      <span class="cat-icon">☕</span> Minuman
+    </button>
+    <button class="cat-btn" onclick="setCategory('dessert', this)">
+      <span class="cat-icon">🍰</span> Dessert
+    </button>
+    <button class="cat-btn" onclick="setCategory('mixplater', this)">
+      <span class="cat-icon">🍱</span> Mix Plater
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content" id="mainContent">
+    <!-- menu / pesanan view injected here -->
+  </main>
+</div>
+
+<!-- PRICE BAR -->
+<div id="priceBar">
+  <div>
+    <div class="lbl">Total Pesanan</div>
+    <div class="amt" id="priceBarAmt">Rp 0</div>
+  </div>
+  <button class="btn btn-primary" style="padding:12px 28px;font-size:.95rem;" onclick="goToCart()">Pesan 🛒</button>
+</div>
+
+<!-- CART DRAWER -->
+<div class="drawer" id="cartDrawer">
+  <div class="drawer-header">
+    <h2>🛒 Keranjang Saya</h2>
+    <button class="drawer-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-footer" id="cartFooter"></div>
+</div>
+<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
+
+<!-- BOOKING OVERLAY -->
+<div class="overlay" id="bookingOverlay">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeBooking()">✕</button>
+    <h2 style="font-family:Playfair Display,serif;margin-bottom:6px;">🪑 Pilih Meja</h2>
+    <p style="font-size:.82rem;color:#888;margin-bottom:4px;">Pilih meja yang tersedia untuk sesi Anda</p>
+    <div class="table-grid" id="tableGrid"></div>
+    <p id="tableMsg" style="font-size:.82rem;color:#888;margin-bottom:12px;"></p>
+    <button class="btn btn-primary" style="width:100%;" onclick="confirmBooking()">Konfirmasi Meja</button>
+  </div>
+</div>
+
+<!-- PAYMENT OVERLAY -->
+<div class="overlay" id="paymentOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closePayment()">✕</button>
+    <h2 style="font-family:Playfair Display,serif;margin-bottom:16px;">💳 Pilih Pembayaran</h2>
+    <div class="pay-methods">
+      <div class="pay-method selected" id="payCash" onclick="selectPay('cash')">
+        <span class="method-icon">💵</span>
+        <div class="method-name">Cash</div>
+      </div>
+      <div class="pay-method" id="payQris" onclick="selectPay('qris')">
+        <span class="method-icon">📱</span>
+        <div class="method-name">QRIS</div>
+      </div>
+    </div>
+    <div id="payDetail"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="confirmPayment()">OK — Konfirmasi Bayar</button>
+  </div>
+</div>
+
+<!-- STRUK OVERLAY -->
+<div class="overlay" id="strukOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('strukOverlay').classList.remove('active')">✕</button>
+    <h2 style="font-family:Playfair Display,serif;margin-bottom:12px;color:#b5651d;">🧾 Struk Pembelian</h2>
+    <div id="strukContent"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="script.js"></script>
+<script>
+// ── GUARD ──
+if (!requireLogin('customer')) {}
+const user = Session.get('user');
+
+// ── STATE ──
+let currentView = 'menu';
+let currentCat  = 'semua';
+let filterMode  = 0; // 0=none 1=asc 2=desc
+let selectedTable = null;
+let pendingOrderItems = null;
+let qrisTimer = null;
+
+// ── INIT ──
+function init() {
+  renderView();
+  updateCartBadge();
+}
+
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if (v==='menu') document.getElementById('btnMenu').classList.add('active');
+  if (v==='pesanan') document.getElementById('btnPesanan').classList.add('active');
+  renderView();
+}
+
+function renderView() {
+  if (currentView==='menu') renderMenu();
+  else if (currentView==='pesanan') renderPesanan();
+}
+
+// ── CATEGORY ──
+function setCategory(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderMenu();
+}
+
+// ── FILTER ──
+function toggleFilter() {
+  filterMode = (filterMode+1)%3;
+  const lbl = document.getElementById('filterLabel');
+  if (filterMode===0) lbl.textContent='Harga ↕';
+  else if (filterMode===1) lbl.textContent='Harga ↑';
+  else lbl.textContent='Harga ↓';
+  renderMenu();
+}
+
+// ── GET MENUS ──
+function getMenus() {
+  const { menus } = Stock.get();
+  let filtered = currentCat==='semua' ? menus : menus.filter(m=>m.cat===currentCat);
+  if (filterMode===1) filtered = [...filtered].sort((a,b)=>minPrice(a)-minPrice(b));
+  if (filterMode===2) filtered = [...filtered].sort((a,b)=>minPrice(b)-minPrice(a));
+  return filtered;
+}
+
+function minPrice(m) {
+  if (m.cat==='special') return m.prices.single;
+  return Math.min(...Object.values(m.prices));
+}
+
+// ── RENDER MENU ──
+function renderMenu() {
+  const menus = getMenus();
+  const { stock } = Stock.get();
+  const catLabels = {semua:'Semua Menu',makanan:'Makanan',minuman:'Minuman',dessert:'Dessert',mixplater:'Mix Plater'};
+
+  let html = `<h2 class="section-title">${catLabels[currentCat]||'Menu'}</h2>
+    <p class="section-sub">${menus.length} menu tersedia · Filter: ${['Semua','Harga Terendah','Harga Tertinggi'][filterMode]}</p>
+    <div class="menu-grid">`;
+
+  menus.forEach(m => {
+    const isSpecial = m.cat==='special';
+    const emojis = MENU_EMOJI[m.cat]||['🍽️'];
+    const emojidx = parseInt(m.id.replace(/\D/g,''))-1;
+    const emoji = emojis[emojidx % emojis.length];
+    const st = stock[m.id]||{};
+
+    const allOut = isSpecial ? (st.single<=0) : ['S','M','L'].every(s=>st[s]<=0);
+
+    // Size HTML
+    let sizeHtml = '';
+    if (!isSpecial) {
+      const sizes = ['S','M','L'];
+      sizeHtml = `<div class="size-row">` + sizes.map(sz=>{
+        const avail = (st[sz]||0)>0;
+        return `<button class="size-btn${!avail?' out':''}" data-size="${sz}" data-price="${m.prices[sz]||0}" 
+          onclick="selectSize('${m.id}','${sz}',${m.prices[sz]||0},this)"
+          ${!avail?'disabled title="Habis"':''}>
+          ${sz}<span class="size-price">${fmtRp(m.prices[sz]||0).replace('Rp ','Rp')}</span>
+        </button>`;
+      }).join('') + `</div>`;
+    }
+
+    const displayPrice = isSpecial ? fmtRp(m.prices.single) : fmtRp(m.prices.S) + ' – ' + fmtRp(m.prices.L);
+
+    html += `<div class="menu-card" id="card-${m.id}">
+      <div class="card-img-wrap">
+        ${menuImg(m, emoji)}
+        ${allOut ? `<div class="menu-sold-out"><span>HABIS</span></div>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-name">${m.name}</div>
+        <div class="card-price" id="price-${m.id}">${displayPrice}</div>
+        ${sizeHtml}
+        <div class="card-actions">
+          <div class="qty-wrap">
+            <button class="qty-btn" onclick="changeQty('${m.id}',-1)">−</button>
+            <span class="qty-num" id="qty-${m.id}">1</span>
+            <button class="qty-btn" onclick="changeQty('${m.id}',1)">+</button>
+          </div>
+          <button class="add-btn" id="add-${m.id}" ${allOut?'disabled':''} 
+            onclick="addToCart('${m.id}','${m.name}','${m.cat}','${emoji}')">
+            ${allOut?'Habis':'+ Tambah'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('mainContent').innerHTML = html;
+  updatePriceBar();
+}
+
+// ── SIZE SELECTION ──
+const selectedSizes = {}; // {menuId: {size, price}}
+
+function selectSize(id, sz, price, el) {
+  // deselect others in same card
+  document.querySelectorAll(`#card-${id} .size-btn`).forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSizes[id] = { size:sz, price };
+  document.getElementById(`price-${id}`).textContent = fmtRp(price);
+}
+
+// ── QTY ──
+const qtyState = {}; // {menuId: qty}
+
+function getQty(id) { return qtyState[id]||1; }
+function changeQty(id, delta) {
+  let q = getQty(id) + delta;
+  if (q<1) q=1;
+  if (q>99) q=99;
+  qtyState[id] = q;
+  const el = document.getElementById(`qty-${id}`);
+  if (el) el.textContent = q;
+}
+
+// ── ADD TO CART ──
+function addToCart(id, name, cat, emoji) {
+  const { menus } = Stock.get();
+  const m = menus.find(x=>x.id===id);
+  const isSpecial = cat==='special';
+
+  let size, price;
+  if (isSpecial) {
+    size = 'single'; price = m.prices.single;
+  } else {
+    if (!selectedSizes[id]) { showToast('Pilih ukuran dulu!','warning'); return; }
+    size  = selectedSizes[id].size;
+    price = selectedSizes[id].price;
+  }
+
+  if (!Stock.isAvailable(id, size)) { showToast('Stok habis!','error'); return; }
+
+  const qty = getQty(id);
+  Cart.add({ id, name, cat, emoji, size, price, qty });
+  updateCartBadge();
+  updatePriceBar();
+  showToast(`${name} (${size}) ditambahkan!`, 'success');
+  qtyState[id] = 1;
+  const el = document.getElementById(`qty-${id}`);
+  if (el) el.textContent = 1;
+}
+
+// ── CART BADGE ──
+function updateCartBadge() {
+  const cnt = Cart.count();
+  const badge = document.getElementById('cartBadge');
+  if (cnt>0) { badge.style.display='flex'; badge.textContent=cnt; }
+  else badge.style.display='none';
+}
+
+// ── PRICE BAR ──
+function updatePriceBar() {
+  const bar = document.getElementById('priceBar');
+  const total = Cart.total();
+  if (total>0) {
+    bar.classList.add('visible');
+    document.getElementById('priceBarAmt').textContent = fmtRp(total);
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+// ── GO TO CART ──
+function goToCart() {
+  openCart();
+}
+
+// ── CART DRAWER ──
+function openCart() {
+  renderCart();
+  document.getElementById('cartDrawer').classList.add('open');
+  document.getElementById('cartOverlay').classList.add('active');
+}
+function closeCart() {
+  document.getElementById('cartDrawer').classList.remove('open');
+  document.getElementById('cartOverlay').classList.remove('active');
+}
+
+function renderCart() {
+  const items = Cart.items();
+  const body = document.getElementById('cartBody');
+  const footer = document.getElementById('cartFooter');
+
+  if (!items.length) {
+    body.innerHTML = `<div style="text-align:center;padding:48px 0;color:#aaa;">
+      <div style="font-size:3rem;margin-bottom:12px;">🛒</div>
+      <p>Keranjang kosong</p></div>`;
+    footer.innerHTML = '';
+    return;
+  }
+
+  body.innerHTML = items.map(it=>`
+    <div class="cart-item">
+      <div class="cart-item-emoji">${it.emoji}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${it.name}</div>
+        <div class="cart-item-sub">Ukuran: ${it.size} · ${fmtRp(it.price)}</div>
+        <div class="cart-item-price">${fmtRp(it.price*it.qty)}</div>
+      </div>
+      <div class="cart-item-qty">
+        <button class="qty-btn" onclick="cartChangeQty('${it.id}','${it.size}',-1)">−</button>
+        <span class="qty-num">${it.qty}</span>
+        <button class="qty-btn" onclick="cartChangeQty('${it.id}','${it.size}',1)">+</button>
+      </div>
+    </div>`).join('');
+
+  const total = Cart.total();
+  footer.innerHTML = `
+    <div class="drawer-total">
+      <span class="label">Total</span>
+      <span class="amount">${fmtRp(total)}</span>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:14px;" onclick="openPayment()">
+      💳 Bayar Sekarang
+    </button>`;
+}
+
+function cartChangeQty(id, size, delta) {
+  const items = Cart.items();
+  const it = items.find(i=>i.id===id&&i.size===size);
+  if (!it) return;
+  const newQty = it.qty + delta;
+  Cart.update(id, size, newQty);
+  updateCartBadge();
+  updatePriceBar();
+  renderCart();
+}
+
+// ── BOOKING ──
+function openBooking() {
+  renderTableGrid();
+  document.getElementById('bookingOverlay').classList.add('active');
+}
+function closeBooking() {
+  document.getElementById('bookingOverlay').classList.remove('active');
+}
+
+function renderTableGrid() {
+  const booked = Booking.getBooked();
+  let html = '';
+  Booking.tables.forEach(n=>{
+    const isBooked = booked.includes(n);
+    const isSel = selectedTable===n;
+    html += `<div class="table-item${isBooked?' booked':''} ${isSel&&!isBooked?' selected':''}" 
+      onclick="${isBooked?'':'selectTable('+n+')'}">
+      <div class="table-icon">${isBooked?'❌':'🪑'}</div>
+      <div>No. ${n}</div>
+    </div>`;
+  });
+  document.getElementById('tableGrid').innerHTML = html;
+  document.getElementById('tableMsg').textContent = selectedTable ? `Meja ${selectedTable} dipilih` : 'Belum ada meja dipilih';
+}
+
+function selectTable(n) {
+  selectedTable = n;
+  renderTableGrid();
+}
+
+function confirmBooking() {
+  if (!selectedTable) { showToast('Pilih meja dulu!','warning'); return; }
+  Session.set('selectedTable', selectedTable);
+  showToast(`Meja ${selectedTable} berhasil dipilih!`,'success');
+  closeBooking();
+}
+
+// ── PAYMENT ──
+let payMethod = 'cash';
+
+function openPayment() {
+  if (!Cart.items().length) { showToast('Keranjang kosong!','warning'); return; }
+  closeCart();
+  selectPay('cash');
+  document.getElementById('paymentOverlay').classList.add('active');
+}
+function closePayment() {
+  if (qrisTimer) clearInterval(qrisTimer);
+  document.getElementById('paymentOverlay').classList.remove('active');
+}
+
+function selectPay(m) {
+  payMethod = m;
+  document.getElementById('payCash').classList.toggle('selected', m==='cash');
+  document.getElementById('payQris').classList.toggle('selected', m==='qris');
+  const detail = document.getElementById('payDetail');
+  const total = Cart.total();
+
+  if (m==='cash') {
+    if (qrisTimer) clearInterval(qrisTimer);
+    detail.innerHTML = `<div class="cash-info">
+      <p style="color:#888;font-size:.82rem;margin-bottom:8px;">Total yang harus dibayar</p>
+      <div class="amount">${fmtRp(total)}</div>
+      <p style="color:#b5651d;font-size:.85rem;margin-top:8px;font-weight:600;">💳 Bayar di Kasir</p>
+    </div>`;
+  } else {
+    detail.innerHTML = `<div class="qr-wrap">
+      <div class="qr-box" id="qrBox">▐▌▐▌◼</div>
+      <p style="font-size:.82rem;color:#3d1a00;font-weight:600;">${fmtRp(total)}</p>
+      <p class="qr-status" id="qrStatus">Scan QRIS untuk membayar...</p>
+      <div style="background:#e8d5c0;border-radius:99px;height:4px;margin-top:10px;overflow:hidden;">
+        <div id="qrProgress" style="background:#b5651d;height:100%;width:0%;transition:width .1s;"></div>
+      </div>
+    </div>`;
+    startQrisSimulation();
+  }
+}
+
+function startQrisSimulation() {
+  if (qrisTimer) clearInterval(qrisTimer);
+  let pct = 0;
+  qrisTimer = setInterval(()=>{
+    pct += 2;
+    const prog = document.getElementById('qrProgress');
+    if (prog) prog.style.width = pct+'%';
+    if (pct>=100) {
+      clearInterval(qrisTimer);
+      const st = document.getElementById('qrStatus');
+      const box = document.getElementById('qrBox');
+      if (st) { st.textContent='✅ Pembayaran Berhasil!'; st.className='qr-status paid'; }
+      if (box) box.textContent='✅';
+      setTimeout(()=>confirmPayment(true), 800);
+    }
+  }, 80);
+}
+
+function confirmPayment(fromQris=false) {
+  if (qrisTimer) clearInterval(qrisTimer);
+  const items = Cart.items();
+  if (!items.length) { showToast('Keranjang kosong!','warning'); return; }
+
+  const table = Session.get('selectedTable');
+  const orderNum = Orders.genOrderNum();
+
+  // reduce stock
+  items.forEach(it=>{ Stock.reduce(it.id, it.size, it.qty); });
+
+  // save order
+  const order = {
+    orderNum,
+    user: user.name || user.email,
+    items: [...items],
+    total: Cart.total(),
+    payMethod,
+    table,
+    time: Date.now()
+  };
+  Orders.add(order);
+  if (table) Booking.book(table, user.name||user.email, orderNum);
+
+  Cart.clear();
+  updateCartBadge();
+  updatePriceBar();
+  closePayment();
+  showToast(`✅ Pesanan #${orderNum} berhasil!`, 'success');
+  setTimeout(()=>setView('pesanan'), 600);
+}
+
+// ── PESANAN VIEW ──
+function renderPesanan() {
+  const orders = Orders.all().filter(o=>o.user===(user.name||user.email));
+  let html = `<h2 class="section-title">Pesanan Saya</h2>
+    <p class="section-sub">${orders.length} pesanan</p>`;
+
+  if (!orders.length) {
+    html += `<div style="text-align:center;padding:60px;color:#aaa;">
+      <div style="font-size:3rem;margin-bottom:16px;">📋</div>
+      <p>Belum ada pesanan. Yuk pesan dulu!</p>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="setView('menu')">Lihat Menu</button>
+    </div>`;
+  } else {
+    html += orders.slice().reverse().map(o=>`
+      <div class="pesanan-card">
+        <div class="pesanan-num">#${o.orderNum}</div>
+        <div class="pesanan-info">
+          <div class="pesanan-name">${o.user}</div>
+          <div class="pesanan-sub">${o.items.length} item · ${fmtRp(o.total)} · ${o.payMethod==='cash'?'Cash':'QRIS'}</div>
+          <div class="pesanan-sub">${new Date(o.time).toLocaleString('id-ID')}</div>
+        </div>
+        <button class="btn btn-outline" style="padding:8px 14px;font-size:.78rem;" onclick="showStruk(${o.orderNum})">Detail</button>
+      </div>`).join('');
+    html += `<div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="setView('menu')">+ Tambah Pesanan</button>
+    </div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function showStruk(orderNum) {
+  const order = Orders.all().find(o=>o.orderNum===orderNum);
+  if (!order) return;
+  const tableInfo = order.table ? `Meja ${order.table}` : 'Tanpa Meja';
+  let rows = order.items.map(it=>`
+    <div class="struk-row">
+      <span>${it.emoji} ${it.name} (${it.size}) x${it.qty}</span>
+      <span>${fmtRp(it.price*it.qty)}</span>
+    </div>`).join('');
+
+  document.getElementById('strukContent').innerHTML = `
+    <div class="struk">
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:1.5rem;">☕</div>
+        <div style="font-family:Playfair Display,serif;font-weight:700;">Djaka Coffee</div>
+        <div style="font-size:.75rem;color:#888;">${new Date(order.time).toLocaleString('id-ID')}</div>
+        <div style="font-size:.82rem;color:#b5651d;font-weight:600;margin-top:4px;">#${order.orderNum} · ${tableInfo}</div>
+      </div>
+      ${rows}
+      <div class="struk-total">
+        <span>TOTAL</span><span>${fmtRp(order.total)}</span>
+      </div>
+      <div style="font-size:.75rem;color:#888;text-align:center;margin-top:10px;">
+        Metode: ${order.payMethod==='cash'?'Cash (Bayar di Kasir)':'QRIS'}
+      </div>
+    </div>`;
+  document.getElementById('strukOverlay').classList.add('active');
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>

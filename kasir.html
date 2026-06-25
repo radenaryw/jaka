@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Kasir — Djaka Coffee</title>
+<link rel="stylesheet" href="style.css"/>
+<style>
+.page-wrap { padding:24px; }
+.section-title { font-family:'Playfair Display',serif; font-size:1.6rem; color:#1a0a00; margin-bottom:6px; }
+.section-sub { color:#888; font-size:.875rem; margin-bottom:22px; }
+
+/* ── MENU GRID ── */
+.menu-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:18px;
+}
+.menu-card {
+  background:#fff; border-radius:16px;
+  box-shadow:0 4px 20px rgba(26,10,0,.10);
+  overflow:hidden; transition:.28s;
+}
+.menu-card:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(26,10,0,.15); }
+.card-img-wrap {
+  height:130px; background:linear-gradient(135deg,#f5efe6,#e8d5c0);
+  display:flex; align-items:center; justify-content:center;
+  font-size:3.5rem; position:relative; overflow:hidden;
+}
+.card-body { padding:14px; }
+.card-name { font-weight:700; font-size:.9rem; color:#1a0a00; margin-bottom:10px; }
+
+/* Stock list */
+.stock-list { display:flex; flex-direction:column; gap:5px; }
+.stock-row {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:.78rem;
+}
+.stock-size { font-weight:700; color:#3d1a00; width:28px; }
+.stock-val { font-weight:600; }
+.stock-val.ok { color:#2e7d32; }
+.stock-val.low { color:#e65100; }
+.stock-val.out { color:#c62828; }
+.stock-ctrl { display:flex; align-items:center; gap:4px; }
+.s-btn {
+  width:22px; height:22px; border-radius:50%; border:1.5px solid #e8d5c0;
+  background:#fff; cursor:pointer; font-size:.8rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; transition:.18s;
+  color:#3d1a00;
+}
+.s-btn:hover { border-color:#b5651d; background:#b5651d; color:#fff; }
+
+/* ── ORDERS TABLE ── */
+.orders-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:.875rem; }
+th { background:linear-gradient(135deg,#1a0a00,#3d1a00); color:#d4a843;
+  padding:12px 16px; text-align:left; font-weight:600; }
+td { padding:11px 16px; border-bottom:1px solid #f0e8df; }
+tr:hover td { background:#fdf8f2; }
+.status-badge {
+  padding:3px 10px; border-radius:99px; font-size:.75rem; font-weight:700;
+}
+.status-badge.cash { background:#fff3e0; color:#e65100; }
+.status-badge.qris { background:#e8f5e9; color:#2e7d32; }
+
+/* ── MEJA TABLE ── */
+.meja-grid {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:12px;
+}
+.meja-item {
+  border-radius:12px; padding:16px;
+  border:2px solid #e8d5c0; text-align:center;
+  background:#fff; transition:.2s;
+}
+.meja-item.occupied { background:linear-gradient(135deg,rgba(181,101,29,.1),rgba(107,58,42,.05));
+  border-color:#b5651d; }
+.meja-icon { font-size:2rem; margin-bottom:6px; }
+.meja-num { font-weight:700; color:#1a0a00; font-size:.9rem; }
+.meja-user { font-size:.72rem; color:#b5651d; margin-top:3px; font-weight:600; }
+
+/* nav */
+.nav-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+.nav-tab {
+  padding:9px 20px; border-radius:8px; border:2px solid #e8d5c0;
+  background:#fff; cursor:pointer; font-weight:600; font-size:.88rem;
+  transition:.2s; font-family:'DM Sans',sans-serif; color:#3d1a00;
+}
+.nav-tab:hover { border-color:#b5651d; }
+.nav-tab.active { background:linear-gradient(135deg,#b5651d,#6b3a2a); color:#fff; border-color:transparent; }
+
+/* auto-refresh indicator */
+.refresh-note { font-size:.75rem; color:#b5651d; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="navbar-brand" href="#">
+    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6b3a2a,#3d1a00);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #d4a843;">☕</div>
+    <span>Djaka Coffee</span>
+  </a>
+  <span style="color:#c8a97e;font-size:.85rem;margin-right:8px;">👤 Kasir</span>
+  <button class="nav-btn" onclick="logout()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg> Keluar
+  </button>
+</nav>
+
+<div class="page-wrap">
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tabMenu" onclick="switchTab('menu')">📋 Menu & Stok</button>
+    <button class="nav-tab" id="tabMeja" onclick="switchTab('meja')">🪑 Status Meja</button>
+    <button class="nav-tab" id="tabPesanan" onclick="switchTab('pesanan')">📦 Pesanan Masuk</button>
+    <button class="nav-tab" id="tabLaporan" onclick="switchTab('laporan')">📑 Laporan</button>
+  </div>
+  <div id="tabContent"></div>
+</div>
+
+<div id="toast-container"></div>
+<script src="script.js"></script>
+<script>
+if (!requireLogin('kasir')) {}
+
+let currentTab = 'menu';
+let refreshInterval = null;
+
+function switchTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active');
+  render();
+}
+
+function render() {
+  if (currentTab==='menu') renderMenu();
+  else if (currentTab==='meja') renderMeja();
+  else if (currentTab==='pesanan') renderPesanan();
+  else renderLaporan();
+}
+
+// ── MENU & STOK ──
+function renderMenu() {
+  const { menus, stock } = Stock.get();
+  let html = `<h2 class="section-title">Menu & Manajemen Stok</h2>
+    <p class="section-sub refresh-note">🔄 Data stok real-time — perubahan langsung terlihat di halaman pembeli</p>
+    <div class="menu-grid">`;
+
+  menus.forEach(m=>{
+    const st = stock[m.id]||{};
+    const isSpecial = m.cat==='special';
+    const emojis = MENU_EMOJI[m.cat]||['🍽️'];
+    const emojidx = parseInt(m.id.replace(/\D/g,''))-1;
+    const emoji = emojis[emojidx % emojis.length];
+
+    let stockHtml = '';
+    if (isSpecial) {
+      const v = st.single||0;
+      stockHtml = `<div class="stock-row">
+        <span class="stock-size">—</span>
+        <span class="stock-val ${v>10?'ok':v>0?'low':'out'}">${v} pcs</span>
+        <div class="stock-ctrl">
+          <button class="s-btn" onclick="adjStock('${m.id}','single',-1)">−</button>
+          <button class="s-btn" onclick="adjStock('${m.id}','single',1)">+</button>
+        </div>
+      </div>`;
+    } else {
+      ['S','M','L'].forEach(sz=>{
+        const v = st[sz]||0;
+        stockHtml += `<div class="stock-row">
+          <span class="stock-size">${sz}</span>
+          <span class="stock-val ${v>10?'ok':v>0?'low':'out'}">${v}</span>
+          <div class="stock-ctrl">
+            <button class="s-btn" onclick="adjStock('${m.id}','${sz}',-1)">−</button>
+            <button class="s-btn" onclick="adjStock('${m.id}','${sz}',1)">+</button>
+          </div>
+        </div>`;
+      });
+    }
+
+    html += `<div class="menu-card">
+      <div class="card-img-wrap">${menuImg(m, emoji, '130px')}</div>
+      <div class="card-body">
+        <div class="card-name">${m.name}</div>
+        <div class="stock-list">${stockHtml}</div>
+        <button class="btn btn-outline" style="width:100%;margin-top:10px;padding:7px;font-size:.78rem;" onclick="restockAll('${m.id}')">🔄 Restock Semua</button>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+function adjStock(id, size, delta) {
+  if (delta>0) Stock.increase(id, size, 1);
+  else Stock.reduce(id, size, 1);
+  renderMenu();
+}
+
+function restockAll(id) {
+  const { menus } = Stock.get();
+  const m = menus.find(x=>x.id===id);
+  if (!m) return;
+  if (m.cat==='special') Stock.increase(id,'single',10);
+  else ['S','M','L'].forEach(sz=>Stock.increase(id,sz,10));
+  showToast('Stok ditambahkan!','success');
+  renderMenu();
+}
+
+// ── MEJA ──
+function renderMeja() {
+  const bookings = Booking.all();
+  let html = `<h2 class="section-title">Status Meja</h2>
+    <p class="section-sub">${bookings.length} meja terpakai dari ${Booking.tables.length}</p>
+    <div class="meja-grid">`;
+
+  Booking.tables.forEach(n=>{
+    const b = bookings.find(x=>x.tableNo===n);
+    html += `<div class="meja-item${b?' occupied':''}">
+      <div class="meja-icon">${b?'👥':'🪑'}</div>
+      <div class="meja-num">Meja ${n}</div>
+      ${b?`<div class="meja-user">${b.user}<br>#${b.orderNum}</div>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:.72rem;margin-top:6px;" 
+          onclick="freeMeja(${n})">Bebaskan</button>`
+        :`<div class="meja-user" style="color:#aaa;">Kosong</div>`}
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+function freeMeja(n) {
+  const bookings = Booking.all().filter(b=>b.tableNo!==n);
+  Booking.save(bookings);
+  showToast(`Meja ${n} dibebaskan`,'success');
+  renderMeja();
+}
+
+// ── PESANAN ──
+function renderPesanan() {
+  const orders = Orders.all().slice().reverse();
+  let html = `<h2 class="section-title">Pesanan Masuk</h2>
+    <p class="section-sub">${orders.length} total pesanan</p>`;
+
+  if (!orders.length) {
+    html += `<div style="text-align:center;padding:48px;color:#aaa;">
+      <div style="font-size:3rem">📦</div><p>Belum ada pesanan masuk</p></div>`;
+  } else {
+    html += `<div class="orders-wrap"><table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pemesan</th>
+          <th>Detail Item</th>
+          <th>Total</th>
+          <th>Meja</th>
+          <th>Bayar</th>
+          <th>Waktu</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    orders.forEach((o,idx)=>{
+      const detailItems = o.items.map(it => `${it.name || it.title}(x${it.qty || 1})`).join(', ');
+      const status = o.status || 'Menunggu';
+
+      html += `<tr>
+        <td><strong>#${o.orderNum}</strong></td>
+        <td>${o.user}</td>
+        <td style="max-width:420px;font-size:.9rem;color:#666;line-height:1.5;">${detailItems}</td>
+        <td><strong style="color:#b5651d">${fmtRp(o.total)}</strong></td>
+        <td>${o.table ? 'Meja '+o.table : '–'}</td>
+        <td>
+          <span class="status-badge ${o.payMethod}">
+            ${o.payMethod==='cash' ? '💵 Cash' : '📱 QRIS'}
+          </span>
+        </td>
+        <td>${new Date(o.time).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
+        <td>
+          <span class="status-badge ${status==='Selesai' ? 'done' : status==='Diproses' ? 'process' : 'pending'}">
+            ${status}
+          </span>
+        </td>
+        <td style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="showDetail(${idx})">Detail</button>
+          <button class="btn btn-warning" onclick="updateStatus(${idx},'Diproses')">Diproses</button>
+          <button class="btn btn-success" onclick="updateStatus(${idx},'Selesai')">Selesai</button>
+        </td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+  }
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+
+function showDetail(idx){
+ const orders=Orders.all().slice().reverse();
+ const o=orders[idx];
+ if(!o)return;
+ const detail=o.items.map(i=>`• ${i.name || i.title} (${i.qty || 1}x)`).join('\n');
+ alert(`Detail Pesanan #${o.orderNum}\n\nPemesan : ${o.user}\nMeja : ${o.table || '-'}\n\n${detail}\n\nTotal : ${fmtRp(o.total)}`);
+}
+
+// ── INIT ──
+render();
+// Auto-refresh every 5s
+setInterval(()=>render(), 5000);
+
+function updateStatus(idx,status){
+ const orders=Orders.all();
+ const real=orders.length-1-idx;
+ orders[real].status=status;
+ Orders.save(orders);
+ renderPesanan();
+}
+
+function renderLaporan(){
+ const report=Reports.generateDaily();
+ const history=Reports.all();
+ let rows=report.orders.map((o,i)=>`<tr><td>${i+1}</td><td>${o.orderNum}</td><td>${o.customerName||'-'}</td><td>${o.status}</td><td>${fmtRp(o.total)}</td></tr>`).join('');
+ document.getElementById('tabContent').innerHTML=`<div style="display:grid;grid-template-columns:3fr 1fr;gap:20px;">
+ <div><h2 class="section-title">Laporan Penjualan Harian</h2>
+ <div style="display:flex;gap:10px;margin-bottom:12px;">
+ <button class="btn btn-primary" onclick="downloadExcel()">⬇ Export Excel</button>
+ <button class="btn btn-danger" onclick="resetDailyReport()">🔄 Reset Harian</button>
+ </div>
+ <table><tr><th>No</th><th>Order</th><th>Pelanggan</th><th>Status</th><th>Total</th></tr>${rows}</table></div>
+ <div><h3>Riwayat</h3>${history.map(h=>`<div class="card" style="padding:10px;margin-bottom:10px;cursor:pointer" onclick="showHistory('${h.date}')">${h.date}<br>${fmtRp(h.total)}</div>`).join('')}</div></div>`;
+}
+function downloadExcel(){
+ const report=Reports.generateDaily();
+ let csv='Order,Pelanggan,Status,Total\n'+report.orders.map(o=>`${o.orderNum},${o.customerName||'-'},${o.status},${o.total}`).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='laporan-'+report.date+'.csv';a.click();
+}
+
+function resetDailyReport(){
+ if(!confirm('Reset laporan harian sekarang?')) return;
+ Reports.resetDaily();
+ renderLaporan();
+}
+
+</script>
+</body>
+</html>

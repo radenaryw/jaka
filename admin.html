@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin — Djaka Coffee</title>
+<link rel="stylesheet" href="style.css"/>
+<style>
+.page-wrap { padding:24px; max-width:1280px; margin:0 auto; }
+.section-title { font-family:'Playfair Display',serif; font-size:1.6rem; color:#1a0a00; margin-bottom:6px; }
+.section-sub { color:#888; font-size:.875rem; margin-bottom:22px; }
+
+/* TABS */
+.nav-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+.nav-tab {
+  padding:9px 20px; border-radius:8px; border:2px solid #e8d5c0;
+  background:#fff; cursor:pointer; font-weight:600; font-size:.88rem;
+  transition:.2s; font-family:'DM Sans',sans-serif; color:#3d1a00;
+}
+.nav-tab:hover { border-color:#b5651d; }
+.nav-tab.active { background:linear-gradient(135deg,#b5651d,#6b3a2a); color:#fff; border-color:transparent; }
+
+/* STATS CARDS */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+.stat-card {
+  background:#fff; border-radius:16px; padding:22px;
+  box-shadow:0 4px 20px rgba(26,10,0,.1);
+  border-left:4px solid var(--accent-c, #b5651d);
+}
+.stat-label { font-size:.78rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.stat-val { font-family:'Playfair Display',serif; font-size:1.7rem; color:#1a0a00; font-weight:700; }
+.stat-icon { float:right; font-size:2rem; margin-top:-4px; }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(26,10,0,.08); }
+table { width:100%; border-collapse:collapse; font-size:.875rem; }
+th { background:linear-gradient(135deg,#1a0a00,#3d1a00); color:#d4a843;
+  padding:13px 16px; text-align:left; font-weight:600; font-size:.82rem; }
+td { padding:12px 16px; border-bottom:1px solid #f0e8df; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#fdf8f2; }
+.badge-pay { padding:3px 10px; border-radius:99px; font-size:.73rem; font-weight:700; }
+.badge-pay.cash { background:#fff3e0; color:#e65100; }
+.badge-pay.qris { background:#e8f5e9; color:#2e7d32; }
+
+/* MENU MANAGE */
+.menu-manage-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+.manage-card {
+  background:#fff; border-radius:16px; padding:18px;
+  box-shadow:0 4px 20px rgba(26,10,0,.08);
+}
+.manage-card-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.manage-emoji { font-size:2.2rem; width:52px; height:52px; border-radius:12px;
+  background:#f5efe6; display:flex; align-items:center; justify-content:center; }
+.manage-name { font-weight:700; font-size:.9rem; color:#1a0a00; flex:1; }
+.manage-cat { font-size:.72rem; color:#888; }
+.price-row { display:flex; justify-content:space-between; font-size:.8rem; padding:3px 0; border-bottom:1px dashed #f0e8df; }
+.price-row:last-child { border:none; }
+.price-key { color:#888; }
+.price-val { font-weight:700; color:#b5651d; }
+
+/* EDIT MODAL */
+.edit-form { display:flex; flex-direction:column; gap:12px; }
+.edit-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.edit-field { display:flex; flex-direction:column; gap:4px; }
+.edit-field label { font-size:.78rem; font-weight:600; color:#3d1a00; }
+.edit-field input {
+  padding:8px 10px; border:2px solid #e8d5c0; border-radius:8px;
+  font-family:'DM Sans',sans-serif; font-size:.88rem; transition:.2s;
+}
+.edit-field input:focus { outline:none; border-color:#b5651d; }
+
+/* CHART BAR */
+.chart-bar-wrap { display:flex; flex-direction:column; gap:10px; }
+.chart-item { display:flex; align-items:center; gap:12px; }
+.chart-label { width:140px; font-size:.82rem; font-weight:600; color:#3d1a00; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chart-bar-bg { flex:1; height:16px; background:#f0e8df; border-radius:99px; overflow:hidden; }
+.chart-bar-fill { height:100%; background:linear-gradient(90deg,#b5651d,#d4a843); border-radius:99px; transition:.5s; }
+.chart-amt { width:90px; text-align:right; font-size:.78rem; font-weight:700; color:#b5651d; }
+
+/* USER LIST */
+.user-card { display:flex; align-items:center; gap:14px; padding:14px;
+  background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(26,10,0,.07); margin-bottom:10px; }
+.user-avatar { width:44px; height:44px; border-radius:50%;
+  background:linear-gradient(135deg,#b5651d,#d4a843);
+  display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#fff; }
+.user-info { flex:1; }
+.user-name { font-weight:700; color:#1a0a00; }
+.user-email { font-size:.78rem; color:#888; }
+.user-role { padding:3px 10px; border-radius:99px; font-size:.73rem; font-weight:700; }
+.user-role.customer { background:#e3f2fd; color:#1565c0; }
+.user-role.kasir { background:#fff3e0; color:#e65100; }
+.user-role.admin { background:#fce4ec; color:#c62828; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="#">
+    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6b3a2a,#3d1a00);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #d4a843;">☕</div>
+    <span>Djaka Coffee</span>
+  </a>
+  <span style="color:#c8a97e;font-size:.85rem;margin-right:8px;">🛠️ Admin Panel</span>
+  <button class="nav-btn" onclick="logout()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg> Keluar
+  </button>
+</nav>
+
+<div class="page-wrap">
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tabDashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="nav-tab" id="tabMenu" onclick="switchTab('menu')">🍽️ Kelola Menu</button>
+    <button class="nav-tab" id="tabPesanan" onclick="switchTab('pesanan')">📦 Semua Pesanan</button>
+    <button class="nav-tab" id="tabMeja" onclick="switchTab('meja')">🪑 Manajemen Meja</button>
+    <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">👥 Pengguna</button>
+    <button class="nav-tab" id="tabLaporan" onclick="switchTab('laporan')">📑 Laporan</button>
+  </div>
+  <div id="tabContent"></div>
+</div>
+
+<!-- Edit Price Modal -->
+<div class="overlay" id="editOverlay">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeEdit()">✕</button>
+    <h2 style="font-family:Playfair Display,serif;margin-bottom:16px;" id="editTitle">Edit Menu</h2>
+    <div id="editForm"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="saveEdit()">Simpan Perubahan</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="script.js">
+function resetMonthlyReport(){
+ if(!confirm('Reset laporan bulanan?')) return;
+ Reports.resetMonthly();
+ renderLaporan();
+}
+function showMonthlyHistory(month){
+ const r=Reports.monthlyHistory().find(x=>x.month===month);
+ if(!r)return;
+ const detail=r.reports.map(x=>`${x.date} : ${fmtRp(x.total)}`).join('\n');
+ alert('Riwayat Bulan '+month+'\n\n'+detail+'\n\nTotal: '+fmtRp(r.total));
+}
+</script>
+<script>
+if (!requireLogin('admin')) {}
+
+let currentTab = 'dashboard';
+let editingId = null;
+
+function switchTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active');
+  render();
+}
+
+function render() {
+  if (currentTab==='dashboard') renderDashboard();
+  else if (currentTab==='menu') renderMenu();
+  else if (currentTab==='pesanan') renderPesanan();
+  else if (currentTab==='meja') renderMeja();
+  else if (currentTab==='users') renderUsers();
+  else renderLaporan();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const orders = Orders.all();
+  const total = orders.reduce((s,o)=>s+o.total,0);
+  const totalItems = orders.reduce((s,o)=>s+o.items.reduce((ss,i)=>ss+i.qty,0),0);
+  const cashOrders = orders.filter(o=>o.payMethod==='cash').length;
+  const qrisOrders = orders.filter(o=>o.payMethod==='qris').length;
+
+  // top menu
+  const menuCount = {};
+  orders.forEach(o=>o.items.forEach(i=>{
+    menuCount[i.name] = (menuCount[i.name]||0) + i.qty;
+  }));
+  const topMenus = Object.entries(menuCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxCount = topMenus.length ? topMenus[0][1] : 1;
+
+  let chartHtml = topMenus.length ? topMenus.map(([name,cnt])=>`
+    <div class="chart-item">
+      <div class="chart-label" title="${name}">${name}</div>
+      <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${(cnt/maxCount*100).toFixed(1)}%"></div></div>
+      <div class="chart-amt">${cnt} terjual</div>
+    </div>`).join('') : `<p style="color:#aaa;text-align:center;padding:24px;">Belum ada data penjualan</p>`;
+
+  const html = `
+    <h2 class="section-title">Dashboard Admin</h2>
+    <p class="section-sub">Ringkasan performa Djaka Coffee</p>
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent-c:#b5651d">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">Total Pendapatan</div>
+        <div class="stat-val">${fmtRp(total)}</div>
+      </div>
+      <div class="stat-card" style="--accent-c:#4caf76">
+        <div class="stat-icon">📦</div>
+        <div class="stat-label">Total Pesanan</div>
+        <div class="stat-val">${orders.length}</div>
+      </div>
+      <div class="stat-card" style="--accent-c:#2196f3">
+        <div class="stat-icon">🍽️</div>
+        <div class="stat-label">Item Terjual</div>
+        <div class="stat-val">${totalItems}</div>
+      </div>
+      <div class="stat-card" style="--accent-c:#ff9800">
+        <div class="stat-icon">💵</div>
+        <div class="stat-label">Cash / QRIS</div>
+        <div class="stat-val">${cashOrders} / ${qrisOrders}</div>
+      </div>
+    </div>
+    <div class="card" style="padding:24px;">
+      <h3 style="font-family:Playfair Display,serif;margin-bottom:16px;color:#1a0a00;">📈 Menu Terlaris</h3>
+      <div class="chart-bar-wrap">${chartHtml}</div>
+    </div>`;
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+// ── MENU ──
+function renderMenu() {
+  const { menus, stock } = Stock.get();
+  let html = `<h2 class="section-title">Kelola Menu</h2>
+    <p class="section-sub">Edit harga dan lihat stok semua menu</p>
+    <div class="menu-manage-grid">`;
+
+  menus.forEach(m=>{
+    const st = stock[m.id]||{};
+    const isSpecial = m.cat==='special';
+    const emojis = MENU_EMOJI[m.cat]||['🍽️'];
+    const emojidx = parseInt(m.id.replace(/\D/g,''))-1;
+    const emoji = emojis[emojidx % emojis.length];
+
+    let priceRows = '';
+    if (isSpecial) {
+      priceRows = `<div class="price-row"><span class="price-key">Single</span><span class="price-val">${fmtRp(m.prices.single)}</span></div>`;
+    } else {
+      ['S','M','L'].forEach(sz=>{
+        priceRows += `<div class="price-row">
+          <span class="price-key">${sz} (stok: ${st[sz]||0})</span>
+          <span class="price-val">${fmtRp(m.prices[sz]||0)}</span>
+        </div>`;
+      });
+    }
+
+    html += `<div class="manage-card">
+      <div class="manage-card-top">
+        <div class="manage-emoji" style="overflow:hidden;padding:0;">${menuImg(m, emoji, '52px')}</div>
+        <div>
+          <div class="manage-name">${m.name}</div>
+          <div class="manage-cat">${m.cat}</div>
+        </div>
+      </div>
+      ${priceRows}
+      <button class="btn btn-outline" style="width:100%;margin-top:12px;padding:8px;font-size:.8rem;" onclick="openEdit('${m.id}')">✏️ Edit Harga</button>
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+let editMenuData = {};
+
+function openEdit(id) {
+  const { menus } = Stock.get();
+  const m = menus.find(x=>x.id===id);
+  if (!m) return;
+  editingId = id;
+  editMenuData = JSON.parse(JSON.stringify(m));
+
+  document.getElementById('editTitle').textContent = '✏️ Edit: '+m.name;
+  const isSpecial = m.cat==='special';
+  let fields = `<div class="edit-field">
+      <label>URL / Path Gambar</label>
+      <input type="text" id="ep_image" value="${m.image||''}" placeholder="assets/menu/food1.jpg atau https://..."/>
+    </div>`;
+  if (isSpecial) {
+    fields += `<div class="edit-field">
+      <label>Harga Single</label>
+      <input type="number" id="ep_single" value="${m.prices.single}" min="0" step="1000"/>
+    </div>`;
+  } else {
+    fields += `<div class="edit-row">
+      <div class="edit-field"><label>Harga S</label><input type="number" id="ep_S" value="${m.prices.S}" min="0" step="1000"/></div>
+      <div class="edit-field"><label>Harga M</label><input type="number" id="ep_M" value="${m.prices.M}" min="0" step="1000"/></div>
+      <div class="edit-field"><label>Harga L</label><input type="number" id="ep_L" value="${m.prices.L}" min="0" step="1000"/></div>
+    </div>`;
+  }
+  document.getElementById('editForm').innerHTML = `<div class="edit-form">${fields}</div>`;
+  document.getElementById('editOverlay').classList.add('active');
+}
+
+function saveEdit() {
+  const { menus } = Stock.get();
+  const d = Stock.get();
+  const m = d.menus.find(x=>x.id===editingId);
+  if (!m) return;
+
+  m.image = document.getElementById('ep_image').value.trim() || `assets/menu/${m.id}.jpg`;
+
+  if (m.cat==='special') {
+    m.prices.single = parseInt(document.getElementById('ep_single').value)||0;
+  } else {
+    m.prices.S = parseInt(document.getElementById('ep_S').value)||0;
+    m.prices.M = parseInt(document.getElementById('ep_M').value)||0;
+    m.prices.L = parseInt(document.getElementById('ep_L').value)||0;
+  }
+  Stock.save(d);
+  showToast('Harga berhasil diperbarui!','success');
+  closeEdit();
+  renderMenu();
+}
+
+function closeEdit() {
+  document.getElementById('editOverlay').classList.remove('active');
+}
+
+// ── PESANAN ──
+function renderPesanan() {
+  const orders = Orders.all().slice().reverse();
+  let html = `<h2 class="section-title">Semua Pesanan</h2>
+    <p class="section-sub">${orders.length} total pesanan</p>`;
+
+  if (!orders.length) {
+    html += `<div style="text-align:center;padding:60px;color:#aaa;">
+      <div style="font-size:3rem">📦</div><p>Belum ada pesanan</p></div>`;
+  } else {
+    html += `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Pemesan</th><th>Detail Item</th><th>Total</th><th>Meja</th><th>Bayar</th><th>Waktu</th><th>Aksi</th></tr></thead>
+      <tbody>`;
+    orders.forEach(o=>{
+      html += `<tr>
+        <td><strong>#${o.orderNum}</strong></td>
+        <td>${o.user}</td>
+        <td style="font-size:.78rem;color:#888">${o.items.map(i=>`${i.name}(${i.size})x${i.qty}`).join(', ')}</td>
+        <td><strong style="color:#b5651d">${fmtRp(o.total)}</strong></td>
+        <td>${o.table?'Meja '+o.table:'–'}</td>
+        <td><span class="badge-pay ${o.payMethod}">${o.payMethod==='cash'?'💵':'📱'} ${o.payMethod.toUpperCase()}</span></td>
+        <td style="font-size:.78rem">${new Date(o.time).toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'})}</td>
+        <td><button class="btn btn-danger" style="padding:5px 10px;font-size:.72rem;" onclick="deleteOrder(${o.orderNum})">Hapus</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    html += `<div style="margin-top:16px;display:flex;gap:10px;">
+      <button class="btn btn-danger" onclick="clearOrders()">🗑️ Hapus Semua Pesanan</button>
+    </div>`;
+  }
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+function deleteOrder(num) {
+  const all = Orders.all().filter(o=>o.orderNum!==num);
+  Orders.save(all);
+  showToast('Pesanan dihapus','success');
+  renderPesanan();
+}
+
+function clearOrders() {
+  if (!confirm('Hapus semua data pesanan?')) return;
+  Orders.save([]);
+  showToast('Semua pesanan dihapus','success');
+  renderPesanan();
+}
+
+// ── MEJA ──
+function renderMeja() {
+  const bookings = Booking.all();
+  let html = `<h2 class="section-title">Manajemen Meja</h2>
+    <p class="section-sub">${bookings.length} dari ${Booking.tables.length} meja terisi</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:20px;">`;
+
+  Booking.tables.forEach(n=>{
+    const b = bookings.find(x=>x.tableNo===n);
+    html += `<div style="background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 3px 16px rgba(26,10,0,.08);border:2px solid ${b?'#b5651d':'#e8d5c0'};">
+      <div style="font-size:2rem;margin-bottom:6px;">${b?'👥':'🪑'}</div>
+      <div style="font-weight:700;color:#1a0a00;">Meja ${n}</div>
+      ${b?`<div style="font-size:.72rem;color:#b5651d;font-weight:600;margin-top:4px;">${b.user}</div>
+        <div style="font-size:.7rem;color:#888;">#${b.orderNum}</div>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:.7rem;margin-top:8px;" onclick="freeMeja(${n})">Bebaskan</button>`
+      :`<div style="font-size:.75rem;color:#aaa;margin-top:4px;">Kosong</div>`}
+    </div>`;
+  });
+
+  html += `</div>
+    <button class="btn btn-danger" onclick="clearAllMeja()">🗑️ Kosongkan Semua Meja</button>`;
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+function freeMeja(n) {
+  Booking.save(Booking.all().filter(b=>b.tableNo!==n));
+  showToast(`Meja ${n} dibebaskan`,'success');
+  renderMeja();
+}
+function clearAllMeja() {
+  if (!confirm('Kosongkan semua meja?')) return;
+  Booking.save([]);
+  showToast('Semua meja dikosongkan','success');
+  renderMeja();
+}
+
+// ── USERS ──
+function renderUsers() {
+  // Simulated user log based on orders
+  const orders = Orders.all();
+  const userMap = {};
+  orders.forEach(o=>{
+    if (!userMap[o.user]) userMap[o.user] = { name:o.user, orders:0, spent:0 };
+    userMap[o.user].orders++;
+    userMap[o.user].spent += o.total;
+  });
+
+  const users = Object.values(userMap);
+  let html = `<h2 class="section-title">Data Pengguna</h2>
+    <p class="section-sub">${users.length} customer terdaftar (dari data pesanan)</p>`;
+
+  // Built-in accounts
+  html += `<h3 style="font-family:Playfair Display,serif;font-size:1rem;color:#3d1a00;margin-bottom:12px;">Akun Sistem</h3>`;
+  const sysAccounts = [
+    {name:'Admin',role:'admin',icon:'🛠️'},
+    {name:'Kasir',role:'kasir',icon:'💳'},
+  ];
+  sysAccounts.forEach(a=>{
+    html += `<div class="user-card">
+      <div class="user-avatar">${a.icon}</div>
+      <div class="user-info">
+        <div class="user-name">${a.name}</div>
+        <div class="user-email">Akun sistem tetap</div>
+      </div>
+      <span class="user-role ${a.role}">${a.role}</span>
+    </div>`;
+  });
+
+  html += `<h3 style="font-family:Playfair Display,serif;font-size:1rem;color:#3d1a00;margin:20px 0 12px;">Customer (dari pesanan)</h3>`;
+  if (!users.length) {
+    html += `<p style="color:#aaa;font-size:.875rem;">Belum ada customer yang melakukan pesanan.</p>`;
+  } else {
+    users.forEach(u=>{
+      html += `<div class="user-card">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <div class="user-name">${u.name}</div>
+          <div class="user-email">${u.orders} pesanan · ${fmtRp(u.spent)} total belanja</div>
+        </div>
+        <span class="user-role customer">customer</span>
+      </div>`;
+    });
+  }
+
+  html += `<div style="margin-top:20px;">
+    <button class="btn btn-danger" onclick="resetAll()">⚠️ Reset Semua Data</button>
+  </div>`;
+  document.getElementById('tabContent').innerHTML = html;
+}
+
+function resetAll() {
+  if (!confirm('Reset SEMUA data (pesanan, stok, meja)? Ini tidak bisa dibatalkan!')) return;
+  Orders.save([]);
+  Booking.save([]);
+  Session.clear('stock');
+  showToast('Semua data direset!','success');
+  render();
+}
+
+// INIT
+render();
+
+function renderLaporan(){
+ const reports=Reports.all();
+ let totalBulanan=reports.reduce((s,r)=>s+r.total,0);
+ const monthlyHistory=Reports.monthlyHistory();
+document.getElementById('tabContent').innerHTML=`<h2 class="section-title">Laporan Admin</h2><div style="margin-bottom:14px;"><button class="btn btn-danger" onclick="resetMonthlyReport()">🔄 Reset Bulanan</button></div><div class="stats-grid"><div class="stat-card"><div class="stat-label">Total Bulanan</div><div class="stat-val">${fmtRp(totalBulanan)}</div></div></div><div style="display:grid;grid-template-columns:3fr 1fr;gap:20px;"><div class="table-wrap"><table><tr><th>Tanggal</th><th>Jumlah Pesanan</th><th>Total</th><th>Aksi</th></tr>${reports.map(r=>`<tr><td>${r.date}</td><td>${r.orders.length}</td><td>${fmtRp(r.total)}</td><td><button class='btn btn-outline' onclick='downloadAdminReport("${r.date}")'>Excel</button></td></tr>`).join('')}</table></div><div><h3>Riwayat Bulanan</h3>${monthlyHistory.map(r=>`<div class="card" style="padding:10px;margin-bottom:10px;cursor:pointer" onclick="showMonthlyHistory('${r.month}')">${r.month}<br>${fmtRp(r.total)}</div>`).join('')}</div></div>`;
+}
+function downloadAdminReport(date){const r=Reports.all().find(x=>x.date===date);let csv='Order,Total\n'+r.orders.map(o=>`${o.orderNum},${o.total}`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='laporan-'+date+'.csv';a.click();}
+
+function resetMonthlyReport(){
+ if(!confirm('Reset laporan bulanan?')) return;
+ Reports.resetMonthly();
+ renderLaporan();
+}
+function showMonthlyHistory(month){
+ const r=Reports.monthlyHistory().find(x=>x.month===month);
+ if(!r)return;
+ const detail=r.reports.map(x=>`${x.date} : ${fmtRp(x.total)}`).join('\n');
+ alert('Riwayat Bulan '+month+'\n\n'+detail+'\n\nTotal: '+fmtRp(r.total));
+}
+</script>
+</body>
+</html>
